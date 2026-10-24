@@ -47,8 +47,8 @@ func main() {
 	// setup a router
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("hello world"))
+	r.Get("/generate_204", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
 	})
 	r.Post("/register", register)
 
