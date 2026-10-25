@@ -2,10 +2,10 @@ package main
 
 import (
 	"embed"
-	_ "embed"
-	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -13,12 +13,15 @@ import (
 	"github.com/pressly/goose/v3"
 	"modernc.org/sqlite"
 	sqlite3 "modernc.org/sqlite/lib"
+
+	tzf "github.com/ringsaturn/tzf/v2"
 )
 
 //go:embed migrations/*.sql
 var embedMigrations embed.FS
 
 var db *sqlx.DB
+var f tzf.F
 
 type Device struct {
 	ID       int    `db:"id"`
@@ -27,8 +30,15 @@ type Device struct {
 }
 
 func main() {
-	// connect to the database
 	var err error
+
+	// initialize the timezone finder
+	f, err = tzf.NewEmbeddedFinder()
+	if err != nil {
+		panic(err)
+	}
+
+	// connect to the database
 	db, err = sqlx.Connect("sqlite", "kazaar.db")
 	if err != nil {
 		panic(err)
@@ -50,33 +60,68 @@ func main() {
 	r.Get("/generate_204", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 	})
+	r.Get("/get_timezone", getTimezone)
 	r.Post("/register", register)
 
 	// listen and serve
 	http.ListenAndServe(":3000", r)
 }
 
-func envelope(w http.ResponseWriter, statusCode int, status string, message string) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(statusCode)
+func getTimezone(w http.ResponseWriter, r *http.Request) {
+	// check for latitude and longitude
+	q := r.URL.Query()
+	if !q.Has("lat") || !q.Has("lon") {
+		reply(w, http.StatusNotFound, Envelope{
+			Status:  "error",
+			Message: "no lat / lon",
+		})
+		return
+	}
 
-	json.NewEncoder(w).Encode(map[string]string{
-		"status":  status,
-		"message": message,
+	// parse the latitude and longitude
+	var err error
+	latitude, err := strconv.ParseFloat(q.Get("lat"), 64)
+	if err != nil {
+		reply(w, http.StatusBadRequest, Envelope{
+			Status:  "error",
+			Message: "invalid lat",
+		})
+	}
+	longitude, err := strconv.ParseFloat(q.Get("lon"), 64)
+	if err != nil {
+		reply(w, http.StatusBadRequest, Envelope{
+			Status:  "error",
+			Message: "invalid lon",
+		})
+	}
+
+	// reply with timezone and offset
+	tz := f.GetTimezoneName(longitude, latitude)
+	loc, _ := time.LoadLocation(tz)
+	_, offsetInSeconds := time.Now().In(loc).Zone()
+	reply(w, http.StatusOK, TimezoneResponse{
+		Status:          "ok",
+		Timezone:        tz,
+		OffsetInSeconds: offsetInSeconds,
 	})
 }
 
 func register(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	if !r.URL.Query().Has("device_id") || !r.URL.Query().Has("platform") {
-		envelope(w, http.StatusForbidden, "error", "no device_id / platform")
+	// get deviceId and platform
+	q := r.URL.Query()
+	if !q.Has("device_id") || !q.Has("platform") {
+		reply(w, http.StatusForbidden, Envelope{
+			Status:  "error",
+			Message: "no device id / platform",
+		})
 		return
 	}
+	deviceId := q.Get("device_id")
+	platform := q.Get("platform")
 
-	deviceId := r.URL.Query().Get("device_id")
-	platform := r.URL.Query().Get("platform")
-
+	// save the device in DB
 	_, err := db.Exec(
 		"INSERT INTO device (device_id, platform) VALUES (?, ?)",
 		deviceId,
@@ -86,14 +131,24 @@ func register(w http.ResponseWriter, r *http.Request) {
 		var sqliteErr *sqlite.Error
 		if errors.As(err, &sqliteErr) {
 			if sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE {
-				envelope(w, http.StatusForbidden, "error", "device must be unique")
+				reply(w, http.StatusForbidden, Envelope{
+					Status:  "error",
+					Message: "device must be unique",
+				})
 				return
 			}
 		}
 
-		envelope(w, http.StatusForbidden, "error", "internal server error")
+		reply(w, http.StatusForbidden, Envelope{
+			Status:  "error",
+			Message: "internal server error",
+		})
 		return
 	}
 
-	envelope(w, http.StatusOK, "error", "registered")
+	// reply with success
+	reply(w, http.StatusOK, RegisterResponse{
+		Status:            "ok",
+		HasCriticalUpdate: false,
+	})
 }
