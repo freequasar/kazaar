@@ -8,11 +8,11 @@ import (
 	"github.com/freequasar/kazaar/internal/utilities"
 )
 
-func (h *QuasarHandler) Generate204(w http.ResponseWriter, r *http.Request) {
+func (quasarHandler *QuasarHandler) Generate204(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (h *QuasarHandler) GetTimezone(w http.ResponseWriter, r *http.Request) {
+func (quasarHandler *QuasarHandler) GetTimezone(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	if !q.Has("lat") || !q.Has("lon") {
 		utilities.ReplyJSON(w, http.StatusBadRequest, EnvelopeResponse{
@@ -39,7 +39,7 @@ func (h *QuasarHandler) GetTimezone(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	timezone := h.finder.GetTimezoneName(longitude, latitude)
+	timezone := quasarHandler.timezoneFinder.GetTimezoneName(longitude, latitude)
 	location, _ := time.LoadLocation(timezone)
 	_, zone := time.Now().In(location).Zone()
 

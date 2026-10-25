@@ -7,7 +7,10 @@ import (
 
 	"github.com/freequasar/kazaar/internal/database"
 	"github.com/freequasar/kazaar/internal/quasar"
+	"github.com/freequasar/kazaar/internal/repositories"
+	"github.com/freequasar/kazaar/internal/services"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	_ "modernc.org/sqlite"
 )
 
@@ -26,9 +29,22 @@ func main() {
 	}
 	defer db.Close()
 
+	deviceRepository := repositories.NewDeviceRepository(db)
+	versionManfiestRepository := repositories.NewVersionManfiestRepository(db)
+
+	deviceService := services.NewDeviceService(deviceRepository, db)
+	versionManfiestService := services.NewVersionManfiestService(versionManfiestRepository, db)
+
 	router := chi.NewRouter()
 
-	quasarHandler, err := quasar.NewQuasarHandler(db, versionsDir)
+	router.Use(middleware.Logger)
+	router.Use(middleware.Recoverer)
+
+	quasarHandler, err := quasar.NewQuasarHandler(
+		deviceRepository, deviceService,
+		versionManfiestRepository, versionManfiestService,
+		versionsDir,
+	)
 	if err != nil {
 		panic(err)
 	}
