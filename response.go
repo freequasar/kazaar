@@ -10,6 +10,17 @@ type Envelope struct {
 	Message string `json:"message"`
 }
 
+type CheckUpdatesResponse struct {
+	HasUpdate   bool   `json:"hasUpdate"`
+	Version     string `json:"version,omitempty"`
+	DownloadUrl string `json:"downloadUrl,omitempty"`
+	Crc32       int    `json:"crc32,omitempty"`
+	IsCritical  bool   `json:"critical,omitempty"`
+	FallbackUrl string `json:"fallbackUrl,omitempty"`
+	FallbackIp  string `json:"fallbackIp,omitempty"`
+	UpdateId    string `json:"updateId,omitempty"`
+}
+
 type RegisterResponse struct {
 	Status            string `json:"status"`
 	HasCriticalUpdate bool   `json:"hasCriticalUpdate"`

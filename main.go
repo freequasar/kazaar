@@ -4,6 +4,7 @@ import (
 	"embed"
 	"errors"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -20,17 +21,18 @@ import (
 //go:embed migrations/*.sql
 var embedMigrations embed.FS
 
+var wd string
 var db *sqlx.DB
 var f tzf.F
 
-type Device struct {
-	ID       int    `db:"id"`
-	DeviceID string `db:"device_id"`
-	Platform string `db:"platform"`
-}
-
 func main() {
 	var err error
+
+	// get the working directory
+	wd, err = os.Getwd()
+	if err != nil {
+		panic(err)
+	}
 
 	// initialize the timezone finder
 	f, err = tzf.NewEmbeddedFinder()
@@ -58,8 +60,13 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Get("/generate_204", func(w http.ResponseWriter, r *http.Request) {
+		ts := time.Now().UTC().UnixMicro()
+		w.Header().Set("X-Start-Time", strconv.FormatInt(ts, 10))
 		w.WriteHeader(http.StatusNoContent)
 	})
+	r.Get("/check_updates", checkUpdates)
+	r.Get("/download_update/{platform}/{version}", downloadUpdate)
+	r.Head("/download_update/{platform}/{version}", downloadUpdate)
 	r.Get("/get_timezone", getTimezone)
 	r.Post("/register", register)
 
@@ -86,6 +93,7 @@ func getTimezone(w http.ResponseWriter, r *http.Request) {
 			Status:  "error",
 			Message: "invalid lat",
 		})
+		return
 	}
 	longitude, err := strconv.ParseFloat(q.Get("lon"), 64)
 	if err != nil {
@@ -93,6 +101,7 @@ func getTimezone(w http.ResponseWriter, r *http.Request) {
 			Status:  "error",
 			Message: "invalid lon",
 		})
+		return
 	}
 
 	// reply with timezone and offset
@@ -107,8 +116,6 @@ func getTimezone(w http.ResponseWriter, r *http.Request) {
 }
 
 func register(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	// get deviceId and platform
 	q := r.URL.Query()
 	if !q.Has("device_id") || !q.Has("platform") {
@@ -122,12 +129,7 @@ func register(w http.ResponseWriter, r *http.Request) {
 	platform := q.Get("platform")
 
 	// save the device in DB
-	_, err := db.Exec(
-		"INSERT INTO device (device_id, platform) VALUES (?, ?)",
-		deviceId,
-		platform,
-	)
-	if err != nil {
+	if _, err := createDevice(deviceId, platform); err != nil {
 		var sqliteErr *sqlite.Error
 		if errors.As(err, &sqliteErr) {
 			if sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE {
