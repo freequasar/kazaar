@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"slices"
 
 	"github.com/freequasar/kazaar/internal/database"
 	"github.com/freequasar/kazaar/internal/emudhra"
@@ -15,17 +16,6 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	_ "modernc.org/sqlite"
 )
-
-var YANDEX_DOMAINS = []string{
-	"quasar.yandex.net", "quasar.yandex.ru", "scbh.yandex.net",
-	"clck.yandex.net", "mobileproxy.passport.yandex.net", "login.yandex.ru",
-	"oauth.yandex.ru", "rpc.alice.yandex.net", "uniproxy.alice.yandex.net",
-	"alice.yandex.net", "alice-ats.yandex.net", "alice-ats-test.yandex.net",
-	"tel.yandex.net", "voiceservices.yandex.net", "ws.api.music.yandex.net",
-	"startup.mobile.yandex.net", "startup.appmetrica.yandex.net", "report.appmetrica.yandex.net",
-	"quasar.s3.yandex.net", "storage.mds.yandex.net", "strm.yandex.ru", "s3.yandex.net",
-	"*.svc.cdn.yandex.net",
-}
 
 func main() {
 	workingDirectory, err := os.Getwd()
@@ -66,9 +56,14 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	quasarHandler.RegisterRoutes(router)
+	router.Mount("/", quasarHandler.Handler())
 
-	tlsCert, err := emudhraCA.GenerateCert(YANDEX_DOMAINS)
+	domains := slices.Concat(
+		quasarHandler.Domains(),
+		// ...
+	)
+
+	tlsCert, err := emudhraCA.GenerateCert(domains)
 	if err != nil {
 		panic(err)
 	}

@@ -1,11 +1,19 @@
 package quasar
 
 import (
+	"net/http"
+
 	"github.com/freequasar/kazaar/internal/repositories"
 	"github.com/freequasar/kazaar/internal/services"
+	"github.com/freequasar/kazaar/internal/utilities"
 	"github.com/go-chi/chi/v5"
 	"github.com/ringsaturn/tzf/v2"
 )
+
+var domains = []string{
+	"quasar.yandex.ru", "quasar.yandex.net",
+	"quasar.yasmina.yango.com", "quasar.yasmina.funtechservices.com",
+}
 
 type QuasarHandler struct {
 	deviceRepository          *repositories.DeviceRepository
@@ -39,15 +47,30 @@ func NewQuasarHandler(
 	}, nil
 }
 
-func (quasarHandler *QuasarHandler) RegisterRoutes(r chi.Router) {
+func (quasarHandler *QuasarHandler) Handler() http.Handler {
+	quasarRouter := chi.NewRouter()
+
 	// Device endpoints
-	r.Post("/register", quasarHandler.RegisterDevice)
+	quasarRouter.Post("/register", quasarHandler.RegisterDevice)
+	quasarRouter.Post(
+		"/update_device_state",
+		quasarHandler.UpdateDeviceState,
+	)
 
 	// Update endpoints
-	r.Get("/check_updates", quasarHandler.CheckUpdates)
-	r.HandleFunc("/download_update/{platform}/{version}", quasarHandler.DownloadUpdate)
+	quasarRouter.Get("/check_updates", quasarHandler.CheckUpdates)
+	quasarRouter.HandleFunc(
+		"/download_update/{platform}/{version}",
+		quasarHandler.DownloadUpdate,
+	)
 
 	// Common endpoints
-	r.Get("/generate_204", quasarHandler.Generate204)
-	r.Get("/get_timezone", quasarHandler.GetTimezone)
+	quasarRouter.Get("/generate_204", quasarHandler.Generate204)
+	quasarRouter.Get("/get_timezone", quasarHandler.GetTimezone)
+
+	return utilities.DomainSubrouter(domains, quasarRouter)
+}
+
+func (quasarHandler *QuasarHandler) Domains() []string {
+	return domains
 }

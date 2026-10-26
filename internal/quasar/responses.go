@@ -2,7 +2,7 @@ package quasar
 
 type EnvelopeResponse struct {
 	Status  string `json:"status"`
-	Message string `json:"message"`
+	Message string `json:"message,omitempty"`
 }
 
 type CheckUpdatesResponse struct {
