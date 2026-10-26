@@ -61,8 +61,8 @@ func (emudhraCA *EmudhraCA) GenerateCert(dnsNames []string) (tls.Certificate, er
 	certTemplate := &x509.Certificate{
 		SerialNumber: big.NewInt(time.Now().UnixNano()),
 		Subject: pkix.Name{
-			CommonName:   "kazaar.local",
-			Organization: []string{"freequasar"},
+			CommonName:   "kazaar",
+			Organization: []string{"https://github.com/freequasar"},
 		},
 		NotBefore:             time.Now(),
 		NotAfter:              time.Now().AddDate(1, 0, 0),
