@@ -47,8 +47,9 @@ type SyncInfoConfig struct {
 
 type AccountConfig struct {
 	// stab
-	Jingle  bool   `json:"jingle"`  // signal after user sez "Алиса" or "ياسمينة"
-	Spotter string `json:"spotter"` // alisa, yandex or yasmina
+	Jingle      bool        `json:"jingle"`  // signal after user sez "Алиса" or "ياسمينة"
+	Spotter     string      `json:"spotter"` // alisa, yandex or yasmina
+	CmdSpotters CmdSpotters `json:"enabledCommandSpotters"`
 }
 
 type DeviceConfig struct {
@@ -73,6 +74,35 @@ type EqualizerBand struct {
 	Frequency int     `json:"freq"`
 	Gain      float32 `json:"gain"`
 	Width     int     `json:"width"`
+}
+
+type CmdSpotters struct {
+	Call      CallSpotters      `json:"call"`
+	Music     MusicSpotters     `json:"music"`
+	SmartHome SmartHomeSpotters `json:"smartHome"`
+	TV        TVSpotters        `json:"tv"`
+}
+
+type CallSpotters struct {
+	Answer bool `json:"answer"`
+}
+
+type MusicSpotters struct {
+	Bluetooth    bool `json:"bluetooth"`
+	Feedback     bool `json:"feedback"`
+	Navigation   bool `json:"navigation"`
+	PlayAndPause bool `json:"playAndPause"`
+	Volume       bool `json:"volume"`
+}
+
+type SmartHomeSpotters struct {
+	Light bool `json:"light"`
+	TV    bool `json:"tv"`
+}
+
+type TVSpotters struct { // prob for speakers with hdmi?
+	BackToHome bool `json:"backToHome"`
+	Navigation bool `json:"navigation"`
 }
 
 // system config structs

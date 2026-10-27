@@ -182,6 +182,26 @@ func (quasarHandler *QuasarHandler) GetSyncInfo(w http.ResponseWriter, r *http.R
 		},
 		Config: SyncInfoConfig{
 			AccountConfig: AccountConfig{
+				CmdSpotters: CmdSpotters{ // TODO Make them customizable
+					Call: CallSpotters{
+						Answer: false,
+					},
+					Music: MusicSpotters{
+						Bluetooth:    true,
+						Feedback:     false,
+						Navigation:   true,
+						PlayAndPause: true,
+						Volume:       true,
+					},
+					SmartHome: SmartHomeSpotters{
+						Light: false,
+						TV:    false,
+					},
+					TV: TVSpotters{
+						BackToHome: false,
+						Navigation: false,
+					},
+				},
 				Jingle:  device.Jingle,
 				Spotter: device.Spotter,
 			},
