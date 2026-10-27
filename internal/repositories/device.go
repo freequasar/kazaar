@@ -9,7 +9,7 @@ import (
 
 const GET_DEVICE_BY_DEVICE_ID_QUERY = `
 SELECT
-    id, device_id, platform
+    id, device_id, platform, name, locale, jingle, spotter
 FROM
     device
 WHERE
