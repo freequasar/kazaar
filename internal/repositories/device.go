@@ -29,6 +29,10 @@ type Device struct {
 	DeviceID    string `db:"device_id"`
 	Platform    string `db:"platform"`
 	NetworkInfo string `db:"network_info"`
+	Name        string `db:"name"`
+	Locale      string `db:"locale"`
+	Jingle      bool   `db:"jingle"`
+	Spotter     string `db:"spotter"`
 }
 
 type NetworkInfo struct {

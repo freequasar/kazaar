@@ -138,3 +138,64 @@ func (quasarHandler *QuasarHandler) UpdateDeviceState(w http.ResponseWriter, r *
 		Message: "",
 	})
 }
+
+func (quasarHandler *QuasarHandler) GetSyncInfo(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	if !q.Has("device_id") || !q.Has("platform") {
+		utilities.ReplyJSON(w, http.StatusBadRequest, EnvelopeResponse{
+			Status:  "error",
+			Message: "invalid request",
+		})
+		return
+	}
+
+	deviceId := q.Get("device_id")
+	if deviceId == "" {
+		utilities.ReplyJSON(w, http.StatusBadRequest, EnvelopeResponse{
+			Status:  "error",
+			Message: "device_id is empty",
+		})
+		return
+	}
+	platform := q.Get("platform")
+	if platform == "" {
+		utilities.ReplyJSON(w, http.StatusBadRequest, EnvelopeResponse{
+			Status:  "error",
+			Message: "platform is empty",
+		})
+		return
+	}
+
+	device, err := quasarHandler.deviceRepository.GetDeviceByDeviceID(deviceId)
+	if err != nil || device.Platform != platform {
+		utilities.ReplyJSON(w, http.StatusBadRequest, EnvelopeResponse{
+			Status:  "error",
+			Message: fmt.Sprintf("unknown device"),
+		})
+		return
+	}
+
+	utilities.ReplyJSON(w, http.StatusOK, SyncInfoResponse{
+		Status: "ok",
+		Subscription: SubscriptionObject{
+			Mode: "transaction",
+		},
+		Config: SyncInfoConfig{
+			AccountConfig: AccountConfig{
+				Jingle:  device.Jingle,
+				Spotter: device.Spotter,
+			},
+			DeviceConfig: DeviceConfig{
+				Name:   device.Name,
+				Locale: device.Locale,
+			},
+			SystemConfig: SystemConfig{
+				ADBDaemon: ADBDaemon{
+					Enabled:          true,
+					RemoteActivation: true,
+					Network:          true,
+				},
+			},
+		},
+	})
+}

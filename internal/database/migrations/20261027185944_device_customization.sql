@@ -1,0 +1,11 @@
+-- +goose Up
+ALTER TABLE device ADD COLUMN name TEXT DEFAULT NULL;
+ALTER TABLE device ADD COLUMN locale TEXT DEFAULT 'ru-RU';
+ALTER TABLE device ADD COLUMN jingle BOOLEAN DEFAULT TRUE;
+ALTER TABLE device ADD COLUMN spotter TEXT DEFAULT 'alisa';
+
+-- +goose Down
+ALTER TABLE device DROP COLUMN name;
+ALTER TABLE device DROP COLUMN locale;
+ALTER TABLE device DROP COLUMN jingle;
+ALTER TABLE device DROP COLUMN spotter;
