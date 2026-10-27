@@ -44,11 +44,7 @@ func (quasarHandler *QuasarHandler) CheckUpdates(w http.ResponseWriter, r *http.
 
 	platform := q.Get("platform")
 	if platform == "" {
-		utilities.ReplyJSON(w, http.StatusBadRequest, EnvelopeResponse{
-			Status:  "error",
-			Message: "platform is empty",
-		})
-		return
+		platform = "yandexstation"
 	}
 
 	clientVersion := q.Get("version")
