@@ -56,6 +56,10 @@ func (quasarHandler *QuasarHandler) Handler() http.Handler {
 		"/update_device_state",
 		quasarHandler.UpdateDeviceState,
 	)
+	quasarRouter.Get(
+		"/get_sync_info",
+		quasarHandler.GetSyncInfo,
+	)
 
 	// Update endpoints
 	quasarRouter.Get("/check_updates", quasarHandler.CheckUpdates)

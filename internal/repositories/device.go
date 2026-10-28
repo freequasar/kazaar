@@ -9,7 +9,7 @@ import (
 
 const GET_DEVICE_BY_DEVICE_ID_QUERY = `
 SELECT
-    id, device_id, platform
+    id, device_id, platform, name, locale, jingle, spotter
 FROM
     device
 WHERE
@@ -29,6 +29,10 @@ type Device struct {
 	DeviceID    string `db:"device_id"`
 	Platform    string `db:"platform"`
 	NetworkInfo string `db:"network_info"`
+	Name        string `db:"name"`
+	Locale      string `db:"locale"`
+	Jingle      bool   `db:"jingle"`
+	Spotter     string `db:"spotter"`
 }
 
 type NetworkInfo struct {
