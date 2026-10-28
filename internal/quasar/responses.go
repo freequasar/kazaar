@@ -36,7 +36,12 @@ type SyncInfoResponse struct {
 }
 
 type SubscriptionObject struct {
-	Mode string `json:"mode"` // should be always "transaction"
+	Mode string `json:"mode"`
+	// for basic speakers it´s just "transaction"
+	// but for subscription based it's "subscription"
+	// with this additional fields are added
+	BrickEnabled bool `json:"enabled,omitempty"`
+	TimeToLock   int  `json:"ttl,omitempty"` // NOTE probably unix time, experiments required
 }
 
 type SyncInfoConfig struct {
@@ -48,33 +53,21 @@ type SyncInfoConfig struct {
 type AccountConfig struct {
 	// stab
 	Jingle      bool        `json:"jingle"`  // signal after user sez "Алиса" or "ياسمينة"
-	Spotter     string      `json:"spotter"` // alisa, yandex or yasmina
+	Spotter     string      `json:"spotter"` // alisa, yandex for ru-RU, yasmina for ar-SA
 	CmdSpotters CmdSpotters `json:"enabledCommandSpotters"`
 }
 
 type DeviceConfig struct {
-	Name      string    `json:"name,omitempty"`
-	Locale    string    `json:"locale,omitempty"`
-	Equalizer Equalizer `json:"equalizer,omitempty"`
+	Name      string     `json:"name,omitempty"`
+	Locale    string     `json:"locale,omitempty"`
+	Equalizer *Equalizer `json:"equalizer"`
 }
 
 type SystemConfig struct {
 	ADBDaemon ADBDaemon `json:"adbd,omitempty"`
 }
 
-// device config structs
-
-type Equalizer struct {
-	Enabled        bool            `json:"enabled"`
-	ActivePresetID string          `json:"active_preset_id"`
-	Bands          []EqualizerBand `json:"bands"`
-}
-
-type EqualizerBand struct {
-	Frequency int     `json:"freq"`
-	Gain      float32 `json:"gain"`
-	Width     int     `json:"width"`
-}
+// account config structs
 
 type CmdSpotters struct {
 	Call      CallSpotters      `json:"call"`
@@ -103,6 +96,20 @@ type SmartHomeSpotters struct {
 type TVSpotters struct { // prob for speakers with hdmi?
 	BackToHome bool `json:"backToHome"`
 	Navigation bool `json:"navigation"`
+}
+
+// device config structs
+
+type Equalizer struct {
+	Enabled        bool            `json:"enabled"`
+	ActivePresetID string          `json:"active_preset_id"`
+	Bands          []EqualizerBand `json:"bands"`
+}
+
+type EqualizerBand struct {
+	Frequency int     `json:"freq"`
+	Gain      float32 `json:"gain"`
+	Width     int     `json:"width"`
 }
 
 // system config structs
